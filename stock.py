@@ -1,6 +1,8 @@
-# -*- coding: utf-8 -*- 
+# -*- coding: GBK -*-  
 import os
 import shutil
+import time
+import datetime
 
 shLineList=[]
 shDateStrList=[]
@@ -18,45 +20,48 @@ priceHighestFList=[]
 priceLowestFList=[]
 tradeVolumeFList=[]
 
-def printDateOfPrice(price,priceFList,dateStrList):
+def convertDateStr2Date(dateStr):
+    split1=dateStr.split('/')
+    return datetime.datetime(int(split1[0]),int(split1[1]),int(split1[2]))
+
+def calNatureDays(dateStr1,dateStr2):
+    d1= convertDateStr2Date(dateStr1)
+    d2= convertDateStr2Date(dateStr2)
+    return (d1-d2).days
+
+def getDateOfPrice(price,priceFList,dateStrList):
     indexPrice=priceFList.index(price)
-    print "出现日期:\t"+dateStrList[indexPrice]
+    return dateStrList[indexPrice]
+    
 
 
 def highAndlowPriceSH(days):
-    print "分析周期(交易日/天):\t"+str(days)+"\t起始日期:"+shDateStrList[-days]
+    print("分析周期(交易日/天):\t"+str(days)+"\t起始日期:"+shDateStrList[-days]+"\t结束日期:"+shDateStrList[-1])
     priceHighest=max(shPriceHighestFList[-days:-1])
-    print "区间内最高点:\t"+str(priceHighest)
-  ##  print "date of Price:\t"+shDateStrList[shPriceHighestFList.index(priceHighest)]
-    printDateOfPrice(priceHighest,shPriceHighestFList,shDateStrList)
-
+    print("区间内最高点:\t"+str(priceHighest))
+    datePriceHighest=getDateOfPrice(priceHighest,shPriceHighestFList,shDateStrList)
+    print("区间内最高价:\t"+str(priceHighest)+"\t出现日期:\t"+datePriceHighest)
+   
     priceLowest=min(shPriceLowestFList[-days:-1])
-    print "区间内最低点:\t"+str(priceLowest)
-    printDateOfPrice(priceLowest,shPriceLowestFList,shDateStrList)
+    datePriceLowest=getDateOfPrice(priceLowest,shPriceLowestFList,shDateStrList)
+    print("区间内最低价:\t"+str(priceLowest)+"\t出现日期:\t"+datePriceLowest)
 
-    print "最高点/最低点:\t"+str(round(priceHighest/priceLowest,2))
+    print("最高点出现与最低点出现交易日个数\t"+str(shPriceHighestFList.index(priceHighest)-shPriceLowestFList.index(priceLowest)))
+    print("最高点/最低点:\t"+str(round(priceHighest/priceLowest,2)))
 
-
-def highAndlowPrice(days):
-    print "#"*50
-    print "分析周期(交易日/天):\t"+str(days)+"\t起始日期:"+dateStrList[-days]
-    priceHighest=max(priceHighestFList[-days:-1])
-    print "区间内最高价:\t"+str(priceHighest)
-    
-    priceLowest=min(priceLowestFList[-days:-1])
-    print "区间内最低价:\t"+str(priceLowest)
-    print "最高点/最低点:\t"+str(round(priceHighest/priceLowest,2))
-
-if __name__=="__main__":
-
-    goalDirPath='result.txt'
-    sourcePath=u"C:\new_dxzq_v6\vipdoc\sh\lday"
-
+###连续交易日下跌###
+def consecutiveFall(priceList,days):
+    for i in range(0,len(priceList)-5,5):
+        fallPercent=(priceList[i+5]-priceList[i])/priceList[i]
+        if fallPercent<-0.15:
+            print(priceList[i])
+def readStockSH999999():
+    print("\n"+"#"*80)
+    print ("current analysis:"+"sh999999")
+    stockDataFile=os.path.join(dataPath,'999999.txt')
+    fileOpened=open(stockDataFile,'r')
     lineIndex=0
-    fileSHOpened= open('999999'+'.txt','r')
-    print "-"*50
-    print "current analysy:"+"sh999999"
-    for line in fileSHOpened.readlines():
+    for line in fileOpened.readlines():
         lineIndex=lineIndex+1
         splitLine=line.split()
         if line!="" and lineIndex>=5 and len(splitLine)>=6:
@@ -67,15 +72,14 @@ if __name__=="__main__":
             shPriceLowestFList.append(float(splitLine[3]))
             shPriceCloseingFList.append(float(splitLine[4]))
             shTradeVolumeFList.append(float(splitLine[5]))
-    fileSHOpened.close()
-    highAndlowPriceSH(400)
+    fileOpened.close()
+    print("上证数据读取完毕")
 
-    print "-"*50
-    print "current analysy:"+"600196"
-    stockID='600196'+'.txt'
-    stockFile=os.path.join(sourcePath,stockID)
-
-    fileOpened=open(stockID,'r')
+def readStockByID(stockID):
+    print("\n"+"#"*80)
+    print("current analysis:"+stockID)
+    stockDataFile=os.path.join(dataPath,stockID+'.txt')
+    fileOpened=open(stockDataFile,'r')
     lineIndex=0
     for line in fileOpened.readlines():
         lineIndex=lineIndex+1
@@ -89,38 +93,51 @@ if __name__=="__main__":
             priceCloseingFList.append(float(splitLine[4]))
             tradeVolumeFList.append(float(splitLine[5]))
     fileOpened.close()
-    iStartNum=0
-    iEndNum=len(dateStrList)
+    print(stockID+"数据读取完毕")
 
 
-    highAndlowPrice(300)
-    highAndlowPrice(30)
-    highAndlowPrice(60)
-    highAndlowPrice(120)
+def highAndlowPrice(stockID,daysList):
+    for days in daysList:
+        print("-"*50)
+        print("分析周期(交易日/天):\t"+str(days)+"\t起始日期:"+dateStrList[-days]+"\t结束日期:"+dateStrList[-1])
+        
+        priceHighest=max(priceHighestFList[-days:-1])
+        datePriceHighest=getDateOfPrice(priceHighest,priceHighestFList,dateStrList)
+        print("区间内最高价:\t"+str(priceHighest)+"\t出现日期:\t"+datePriceHighest)
+        
+        priceLowest=min(priceLowestFList[-days:-1])
+        datePriceLowest=getDateOfPrice(priceLowest,priceLowestFList,dateStrList)
+        print("区间内最低价:\t"+str(priceLowest)+"\t出现日期:\t"+datePriceLowest)
+        
+        print("最高点出现与最低点出现交易日个数(天):\t"+str(1+priceHighestFList.index(priceHighest)-priceLowestFList.index(priceLowest)))
+        daySpan=calNatureDays(datePriceHighest,datePriceLowest)
+        print("最高点出现与最低点出现自然日个数(天):\t"+str(daySpan))
+        print("最高点/最低点:\t"+str(round(priceHighest/priceLowest,2)))
+
+if __name__=="__main__":
+    print ("股市有风险，股市有无穷的机会，股市需要耐心，股市态度要认真。")
+    startClock=time.clock()
+    
+    goalFilePath='result.txt'
+    dataPath=u"dataStock"
+
+    iDaysPeriodUser=300
+    readStockSH999999()
+    highAndlowPriceSH(iDaysPeriodUser) 
+ 
+
+    stockID="600196"
+    readStockByID(stockID)
+    highAndlowPrice(stockID,[iDaysPeriodUser,30,60,120])
     for i in range(-30,0):
         pass
 
-    fileWrited=open(goalDirPath,'w')
-##  lineList=[]
-##    for i in range(0,len(lineList)-1):
-##        splitLine=lineList[i].split()
-##        splitNextLine=lineList[i+1].split()
-##        if len(splitLine)!=4:
-##            print i,line
-##        else:
-##            fileWrited.write('\t'.join(splitLine)+'\n')
-##            if splitNextLine[0]!=splitLine[0]:
-##                splitLine[1]=str(int(splitLine[1])+1)
-##                splitLine[2]=splitLine[3]
-##                fileWrited.write('\t'.join(splitLine)+'\n')
-##            
-##    fileWrited.write(lineList[-1])
-##    splitLine=lineList[-1].split()
-##    splitLine[1]=str(int(splitLine[1])+1)
-##    splitLine[2]=splitLine[3]
-##    fileWrited.write('\t'.join(splitLine)+'\n')
-    
+    fileWrited=open(goalFilePath,'w')
+    fileWrited.write('\n')
     fileWrited.close()
+
+    timeSpan=time.clock()-startClock
+    print("Time used(s):",timeSpan)
 
 
 
