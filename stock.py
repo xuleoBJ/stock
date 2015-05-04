@@ -1,4 +1,5 @@
-# -*- coding: GBK -*-  
+## -*- coding: GBK -*-  
+# -*- coding: utf-8 -*-
 import os
 import shutil
 import time
@@ -23,6 +24,7 @@ amplitudeFlist=[]  ##振幅
 
 ##计算按周期计算涨停幅度
 
+lineWrited=[]
 
 def convertDateStr2Date(dateStr):
     split1=dateStr.split('/')
@@ -36,8 +38,6 @@ def calNatureDays(dateStr1,dateStr2):
 def getDateOfPrice(price,priceFList,dateStrList):
     indexPrice=priceFList.index(price)
     return dateStrList[indexPrice]
-    
-
 
 def highAndlowPriceSH(days):
     print("分析周期(交易日/天):\t"+str(days)+"\t起始日期:"+shDateStrList[-days]+"\t结束日期:"+shDateStrList[-1])
@@ -49,9 +49,7 @@ def highAndlowPriceSH(days):
     priceLowest=min(shPriceLowestFList[-days:-1])
     datePriceLowest=getDateOfPrice(priceLowest,shPriceLowestFList,shDateStrList)
     print("区间内最低价:\t"+str(priceLowest)+"\t出现日期:\t"+datePriceLowest)
-
    
-    
     print("最高点出现与最低点出现交易日个数\t"+str(shPriceHighestFList.index(priceHighest)-shPriceLowestFList.index(priceLowest)))
     print("最高点/最低点:\t"+str(round(priceHighest/priceLowest,2)))
 
@@ -74,7 +72,38 @@ def readStockSH999999():
             shPriceCloseingFList.append(float(splitLine[4]))
             shTradeVolumeFList.append(float(splitLine[5]))
     fileOpened.close()
-    print("上证数据读取完毕,数据开始日：\t"+shDateStrList[0]+"数据最大日：\t"+shDateStrList[-1])
+    print("上证数据读取完毕,数据开始日：\t"+shDateStrList[0]+"数据结束日：\t"+shDateStrList[-1])
+
+def findPeak(days):
+    print('分析周期(天):'+str(days))
+    lineWrited.append('-'*50)
+    lineWrited.append('分析周期(天):'+str(days))
+    d1=convertDateStr2Date(shDateStrList[0])
+    d2=convertDateStr2Date(shDateStrList[0])
+    standValue=100
+    days=days/2
+    for i in range(days,len(shDateStrList)-days):
+##        index, value = max(enumerate(shPriceHighestFList[i-days:i+days]), key=operator.itemgetter(1))
+        max_value = max(shPriceHighestFList[i-days:i+days])
+        max_index = shPriceHighestFList.index(max_value)
+        if max_index==i:
+            d2=convertDateStr2Date(shDateStrList[i])
+            daysSpan=(d2-d1).days
+            lineWrited.append(shDateStrList[i]+"\t局部高点:\t"+str(shPriceHighestFList[i])+"\t距上次峰值交易日个数:\t"+str(daysSpan)+"\t浮动幅度%:\t"+str(round((max_value-standValue)/standValue,3)*100))
+            d1=d2
+            standValue=max_value
+           
+        min_value = min(shPriceLowestFList[i-days:i+days])
+        min_index = shPriceLowestFList.index(min_value)
+        if min_index==i:
+            d2=convertDateStr2Date(shDateStrList[i])
+            daysSpan=(d2-d1).days
+            lineWrited.append(shDateStrList[i]+"\t局部低点:\t"+str(shPriceLowestFList[i])+"\t距上次峰值交易日个数:\t"+str(daysSpan)+"\t浮动幅度%:\t"+str(round((min_value-standValue)/standValue,3)*100))
+            d1=d2
+            standValue=min_value
+    d2=convertDateStr2Date(shDateStrList[-1])
+    daysSpan=(d2-d1).days
+    lineWrited.append(shDateStrList[-1]+"\t当前点位:\t"+str(shPriceCloseingFList[-1])+"\t距离上次峰值交易日个数:\t"+str(daysSpan)+"\t浮动幅度%:\t"+str(round((shPriceCloseingFList[-1]-standValue)/standValue,3)*100))
 
 def readStockByID(stockID):
     print("\n"+"#"*80)
@@ -94,7 +123,7 @@ def readStockByID(stockID):
             priceCloseingFList.append(float(splitLine[4]))
             tradeVolumeFList.append(float(splitLine[5]))
     fileOpened.close()
-    print(stockID+"数据读取完毕,数据开始日：\t"+dateStrList[0]+"数据最大日：\t"+dateStrList[-1])
+    print(stockID+"数据读取完毕,数据开始日：\t"+dateStrList[0]+"\t数据结束日：\t"+dateStrList[-1])
 
 
 def analysisDate(stockID,dateStrStart,dateStrEnd):
@@ -149,7 +178,6 @@ def analysisScale(stockID,dateStrStart,dateStrEnd):
     print("涨跌幅超过5%:\t"+str(len(zhangdiefuFList))+"\t起始日期是："+strDate)
 
 
-
 ###连续交易日幅度###
 def analysisConsecutive(stockID,dateStrStart,dateStrEnd,numConsecutiveTradeDays,fScale):
 ## get analysis indexStartDay and indexEndDay by dateStrList
@@ -167,7 +195,6 @@ def analysisConsecutive(stockID,dateStrStart,dateStrEnd,numConsecutiveTradeDays,
     for item in waveFList:
         strDate=strDate+dateStrList[item]+"\t"
     print("振幅超过比例天数:\t"+str(len(waveFList))+"\t起始日期是："+strDate)
-
     
 
 def highAndlowPrice(stockID,daysList):
@@ -195,23 +222,31 @@ def highAndlowPrice(stockID,daysList):
         print("最高点/最低点:\t"+str(round(priceHighest/priceLowest,2)))
 
 if __name__=="__main__":
+    print("\n"+"#"*80)
     print ("股市有风险，股市有无穷的机会，股市需要耐心，股市态度要认真。")
-    startClock=time.clock()
+    print("\n"+"#"*80)
+    
+    startClock=time.clock() ##记录程序开始计算时间
     
     goalFilePath='result.txt'
     dataPath=u"dataStock"
 
     iDaysPeriodUser=300
     readStockSH999999()
-    highAndlowPriceSH(iDaysPeriodUser) 
- 
+    highAndlowPriceSH(iDaysPeriodUser)
+    print ("正在进行大盘时空分析：")
+    findPeak(30) 
+    findPeak(50)
+    findPeak(100)
+    findPeak(200) 
 
     stockID="600196"
     readStockByID(stockID)
   ##  highAndlowPrice(stockID,[iDaysPeriodUser,30,60,120])
     for item in [iDaysPeriodUser,30,60,120]:
-        dateStrStart=dateStrList[-item]
+        dateStrStart=dateStrList[-item-1]
         dateStrEnd=dateStrList[-1]
+        print("\n"+"$"*80)
         analysisDate(stockID,dateStrStart,dateStrEnd)
         analysisScale(stockID,dateStrStart,dateStrEnd)
         numConsecutiveTradeDays=5
@@ -219,12 +254,12 @@ if __name__=="__main__":
         analysisConsecutive(stockID,dateStrStart,dateStrEnd,numConsecutiveTradeDays,fScale)
 
     fileWrited=open(goalFilePath,'w')
-    fileWrited.write('\n')
+    for line in lineWrited:
+        fileWrited.write(line+'\n')
     fileWrited.close()
 
     timeSpan=time.clock()-startClock
-    print("Time used(s):",timeSpan)
 
-
+    print("Time used(s):",round(timeSpan,2))
 
 
