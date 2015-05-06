@@ -57,7 +57,7 @@ def readStockSH999999():
     for line in fileOpened.readlines():
         lineIndex=lineIndex+1
         splitLine=line.split()
-        if line!="" and lineIndex>=5 and len(splitLine)>=6:
+        if line!="" and lineIndex>=3 and len(splitLine)>=6:
             shLineList.append(line)
             shDateStrList.append(splitLine[0])
             shPriceOpeningFList.append(float(splitLine[1]))
@@ -85,7 +85,7 @@ def findPeak(days,curDateStrList,curPriceOpeningFList,curPriceHighestFList,curPr
         if max_index==i:
             d2=convertDateStr2Date(curDateStrList[i])
             daysSpan=(d2-d1).days
-            lineWrited.append(curDateStrList[i]+"\t"+str(curPriceHighestFList[i])+"\t"+str(max_value-indexLast)+"\t"+str(daysSpan)+"\t"+str(round((max_value-standValue)/standValue,3)*100))
+            lineWrited.append(curDateStrList[i]+"\t"+str(curPriceHighestFList[i])+"\t"+str(max_index-indexLast)+"\t"+str(daysSpan)+"\t"+str(round((max_value-standValue)/standValue,3)*100))
             d1=d2
             indexLast=max_index
             standValue=max_value
@@ -107,10 +107,11 @@ def findPeak(days,curDateStrList,curPriceOpeningFList,curPriceHighestFList,curPr
 def readStockByID(stockID):
     dirData="export"
     print("\n"+"#"*80)
-    if stockID.startswith("6"):
-        stockDataFile=os.path.join(dirData,"SH#"+stockID+'.txt')
-    else:
-        stockDataFile=os.path.join(dirData,"SZ#"+stockID+'.txt')
+    stockDataFile=os.path.join(dirData,stockID+'.txt')
+##    if stockID.startswith("6"):
+##        stockDataFile=os.path.join(dirData,"SH#"+stockID+'.txt')
+##    else:
+##        stockDataFile=os.path.join(dirData,"SZ#"+stockID+'.txt')
     fileOpened=open(stockDataFile,'r')
     lineIndex=0
     for line in fileOpened.readlines():
@@ -212,7 +213,6 @@ def analysisSynchronization(stockID,dateStrStart,dateStrEnd):
     indexStart=dateStrList.index(dateStrStart)
     indexEnd=dateStrList.index(dateStrEnd)
     print("-"*50)
-    print("与大盘同步性分析")
     synFile=stockID+"syn.txt"
     fileWrited=open(synFile,'w')
     waveSHFList=[]
@@ -226,7 +226,7 @@ def analysisSynchronization(stockID,dateStrStart,dateStrEnd):
         waveStockFList.append(r1)
         rSH=round(100*(shPriceCloseingFList[indexSH]-shPriceCloseingFList[indexSH-1])/shPriceCloseingFList[indexSH-1],2)
         waveSHFList.append(rSH)
-        line=dateStrSH+"\t"+str(rSH)+"\t"+str(r1)+"\t"+ str(round(r1/rSH,2))
+        line=dateStrSH+"\t"+str(rSH)+"\t"+str(r1)+"\t"+ str(round(r1-rSH,2))
         fileWrited.write(line+'\n')
     fileWrited.close()
     print("股票与大盘指数相关系数："+str(pearsonr(waveSHFList,waveStockFList)))
@@ -258,7 +258,7 @@ if __name__=="__main__":
     findPeak(240,shDateStrList,shPriceOpeningFList,shPriceHighestFList,shPriceLowestFList,shPriceCloseingFList)
     findPeak(300,shDateStrList,shPriceOpeningFList,shPriceHighestFList,shPriceLowestFList,shPriceCloseingFList)
 
-    stockID="002673"
+    stockID="600196"
     readStockByID(stockID)
 
   ##  highAndlowPrice(stockID,[iDaysPeriodUser,30,60,120])
@@ -267,9 +267,11 @@ if __name__=="__main__":
         dateStrEnd=dateStrList[-1]
         print("\n"+"$"*80)
         analysisDate(dateStrStart,dateStrEnd,dateStrList,priceOpeningFList,priceHighestFList,priceLowestFList,priceCloseingFList)
+        ##分析单个交易日的波动幅度和振动
         analysisScale(stockID,dateStrStart,dateStrEnd)
         numConsecutiveTradeDays=5
         fScale=0.1
+        ##分析连续交易日的价差
         analysisConsecutive(stockID,dateStrStart,dateStrEnd,numConsecutiveTradeDays,fScale)
     
     print ("正在进行时空分析：")
@@ -284,7 +286,10 @@ if __name__=="__main__":
         fileWrited.write(line+'\n')
     fileWrited.close()
     
-    analysisSynchronization(stockID,dateStrList[-100],dateStrList[-1])
+    ##与大盘同步性分析
+    print("与大盘同步性分析")
+    numOfTradeDays=200
+    analysisSynchronization(stockID,dateStrList[-numOfTradeDays],dateStrList[-1])
     timeSpan=time.clock()-startClock
 
     print("Time used(s):",round(timeSpan,2))
