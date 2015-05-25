@@ -1,0 +1,9 @@
+('E:\\ProjectPlatform\\stock\\stock\\build\\printTest\\printTest.exe',
+ True,
+ False,
+ None,
+ None,
+ [],
+ None,
+ False,
+ 1431316402L)

@@ -7,6 +7,8 @@ import datetime
 import numpy
 from scipy.stats.stats import pearsonr
 
+
+##定义上证大盘指数List
 shLineList=[]
 shDateStrList=[]
 shPriceOpeningFList=[]
@@ -16,37 +18,6 @@ shPriceLowestFList=[]
 shTradeVolumeFList=[]
 shRiseRateFList=[]  ##涨幅
 shWaveRateFLst=[] ##波动涨幅
-
-lineList=[]
-dateStrList=[]
-priceOpeningFList=[]
-priceCloseingFList=[]
-priceHighestFList=[]
-priceLowestFList=[]
-tradeVolumeFList=[] ##成交量
-turnoverFList=[]  ##成交额
-
-riseRateFList=[]  ##涨幅
-waveRateFList=[] ##波动涨幅
-
-
-##计算按周期计算涨停幅度
-
-lineWrited=[]
-
-def convertDateStr2Date(dateStr):
-    split1=dateStr.split('/')
-    return datetime.date(int(split1[0]),int(split1[1]),int(split1[2]))
-
-def calNatureDays(dateStr1,dateStr2):
-    d1= convertDateStr2Date(dateStr1)
-    d2= convertDateStr2Date(dateStr2)
-    return (d1-d2).days
-
-def getDateOfPrice(price,priceFList,dateStrList):
-    indexPrice=priceFList.index(price)
-    return dateStrList[indexPrice]
-
 
 def readStockSH999999():
     print("\n"+"#"*80)
@@ -67,6 +38,71 @@ def readStockSH999999():
             shTradeVolumeFList.append(float(splitLine[5]))
     fileOpened.close()
     print("上证数据读取完毕,数据开始日：\t"+shDateStrList[0]+"数据结束日：\t"+shDateStrList[-1])
+
+
+
+##读取指定代码List
+lineList=[]
+dateStrList=[]
+priceOpeningFList=[]
+priceCloseingFList=[]
+priceHighestFList=[]
+priceLowestFList=[]
+tradeVolumeFList=[] ##成交量
+turnoverFList=[]  ##成交额
+riseRateFList=[]  ##涨幅
+waveRateFList=[] ##波动涨幅
+
+def readStockByID(stockID):
+    dirData="export"
+    print("\n"+"#"*80)
+    stockDataFile=os.path.join(dirData,stockID+'.txt')
+##    if stockID.startswith("6"):
+##        stockDataFile=os.path.join(dirData,"SH#"+stockID+'.txt')
+##    else:
+##        stockDataFile=os.path.join(dirData,"SZ#"+stockID+'.txt')
+    fileOpened=open(stockDataFile,'r')
+    lineIndex=0
+    for line in fileOpened.readlines():
+        lineIndex=lineIndex+1
+        splitLine=line.split()
+        if lineIndex==1:
+            print(line)
+        if line!="" and lineIndex>=3 and len(splitLine)>=5:
+            lineList.append(line)
+            dateStrList.append(splitLine[0])
+            priceOpeningFList.append(float(splitLine[1]))
+            priceHighestFList.append(float(splitLine[2]))
+            priceLowestFList.append(float(splitLine[3]))
+            priceCloseingFList.append(float(splitLine[4]))
+            tradeVolumeFList.append(float(splitLine[5]))
+            if len(priceCloseingFList)>=2:
+                riseRateFList.append(round(100*(priceCloseingFList[-1]-priceCloseingFList[-2])/priceCloseingFList[-1],2))
+                waveRateFList.append(round(100*(priceHighestFList[-1]-priceLowestFList[-2])/priceCloseingFList[-1],2))
+            else:
+                riseRateFList.append(0)
+                waveRateFList.append(0)
+    fileOpened.close()
+    print("数据读取完毕,数据开始日：\t"+dateStrList[0]+"\t数据结束日：\t"+dateStrList[-1])
+
+
+##计算按周期计算涨停幅度
+
+lineWrited=[]
+
+def convertDateStr2Date(dateStr):
+    split1=dateStr.split('/')
+    return datetime.date(int(split1[0]),int(split1[1]),int(split1[2]))
+
+def calNatureDays(dateStr1,dateStr2):
+    d1= convertDateStr2Date(dateStr1)
+    d2= convertDateStr2Date(dateStr2)
+    return (d1-d2).days
+
+def getDateOfPrice(price,priceFList,dateStrList):
+    indexPrice=priceFList.index(price)
+    return dateStrList[indexPrice]
+
 
 def findPeak(days,curDateStrList,curPriceOpeningFList,curPriceHighestFList,curPriceLowestFList,curPriceCloseingFList):
     print('进行峰值分析，分析周期(天):'+str(days))
@@ -102,39 +138,22 @@ def findPeak(days,curDateStrList,curPriceOpeningFList,curPriceHighestFList,curPr
     d2=convertDateStr2Date(curDateStrList[-1])
     daysSpan=(d2-d1).days
     lineWrited.append(curDateStrList[-1]+"\t"+str(curPriceCloseingFList[-1])+"\t"+str(len(curDateStrList)-indexLast)+"\t"+str(daysSpan)+"\t"+str(round((curPriceCloseingFList[-1]-standValue)/standValue,3)*100))
-    
 
-def readStockByID(stockID):
-    dirData="export"
-    print("\n"+"#"*80)
-    stockDataFile=os.path.join(dirData,stockID+'.txt')
-##    if stockID.startswith("6"):
-##        stockDataFile=os.path.join(dirData,"SH#"+stockID+'.txt')
-##    else:
-##        stockDataFile=os.path.join(dirData,"SZ#"+stockID+'.txt')
-    fileOpened=open(stockDataFile,'r')
-    lineIndex=0
-    for line in fileOpened.readlines():
-        lineIndex=lineIndex+1
-        splitLine=line.split()
-        if lineIndex==1:
-            print(line)
-        if line!="" and lineIndex>=3 and len(splitLine)>=5:
-            lineList.append(line)
-            dateStrList.append(splitLine[0])
-            priceOpeningFList.append(float(splitLine[1]))
-            priceHighestFList.append(float(splitLine[2]))
-            priceLowestFList.append(float(splitLine[3]))
-            priceCloseingFList.append(float(splitLine[4]))
-            tradeVolumeFList.append(float(splitLine[5]))
-            if len(priceCloseingFList)>=2:
-                riseRateFList.append(round(100*(priceCloseingFList[-1]-priceCloseingFList[-2])/priceCloseingFList[-1],2))
-                waveRateFList.append(round(100*(priceHighestFList[-1]-priceLowestFList[-2])/priceCloseingFList[-1],2))
-            else:
-                riseRateFList.append(0)
-                waveRateFList.append(0)
-    fileOpened.close()
-    print("数据读取完毕,数据开始日：\t"+dateStrList[0]+"\t数据结束日：\t"+dateStrList[-1])
+
+def contiveTradeDaysAnalysis(numDays,curDateStrList,curRiseRateFList):
+    lineWrited.append('-'*50)
+    lineWrited.append('连续下跌交易日个数:'+str(numDays))
+    indexList=[]
+    for i in range(0,len(curRiseRateFList)-numDays):
+        bFall=0
+        for j in range(numDays):
+            if curRiseRateFList[i+j]>=0:
+                bFall=1
+        if bFall==0:
+            print curDateStrList[i]
+  ##  lineWrited.append(curDateStrList[-1]+"\t"+str(curPriceCloseingFList[-1])+"\t"+str(len(curDateStrList)-indexLast)+"\t"+str(daysSpan)+"\t"+str(round((curPriceCloseingFList[-1]-standValue)/standValue,3)*100))
+
+
 
 
 def analysisDate(dateStrStart,dateStrEnd,curDateStrList,curPriceOpeningFList,curPriceHighestFList,curPriceLowestFList,curPriceCloseingFList):
@@ -258,7 +277,7 @@ if __name__=="__main__":
     findPeak(240,shDateStrList,shPriceOpeningFList,shPriceHighestFList,shPriceLowestFList,shPriceCloseingFList)
     findPeak(300,shDateStrList,shPriceOpeningFList,shPriceHighestFList,shPriceLowestFList,shPriceCloseingFList)
 
-    stockID="600196"
+    stockID="002673"
     readStockByID(stockID)
 
   ##  highAndlowPrice(stockID,[iDaysPeriodUser,30,60,120])
@@ -281,6 +300,12 @@ if __name__=="__main__":
     findPeak(120,dateStrList,priceOpeningFList,priceHighestFList,priceLowestFList,priceCloseingFList)
     findPeak(180,dateStrList,priceOpeningFList,priceHighestFList,priceLowestFList,priceCloseingFList)
 
+    print ("分析连续交易日情况：")
+    contiveTradeDaysAnalysis(5,dateStrList,riseRateFList)
+
+
+    ##分析连续上涨交易日和连续下跌交易日的成交量对比
+
     fileWrited=open(goalFilePath,'w')
     for line in lineWrited:
         fileWrited.write(line+'\n')
@@ -290,8 +315,13 @@ if __name__=="__main__":
     print("与大盘同步性分析")
     numOfTradeDays=200
     analysisSynchronization(stockID,dateStrList[-numOfTradeDays],dateStrList[-1])
-    timeSpan=time.clock()-startClock
 
+
+    print ("分析近期走势：")
+    numOfTradeDays=30
+    
+    timeSpan=time.clock()-startClock
     print("Time used(s):",round(timeSpan,2))
+    raw_input()
 
 
