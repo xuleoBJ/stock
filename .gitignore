@@ -6,6 +6,7 @@ ehthumbs.db
 *.txt
 export/
 *.swp
+dist/
 
 # Folder config file
 Desktop.ini
