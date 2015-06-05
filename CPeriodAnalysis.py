@@ -39,10 +39,10 @@ if __name__=="__main__":
     
     shStock=Cstock.StockSH()
     
-    stockID="002673"
+    stockID="600196"
     curStock=Cstock.Stock(stockID)
 
-    for numOfTradeDays in [10,20,30]:
+    for numOfTradeDays in [5,10,20,30]:
         analysisSynchronization(numOfTradeDays,curStock,shStock)   
   
 
